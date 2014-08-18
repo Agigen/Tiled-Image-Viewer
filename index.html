@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
+    <title>TiledMapViewer</title>
+    <style type="text/css">
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div style="width: 100%; height: 100%;" id="tiled-image"></div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/pixi.js/1.6.1/pixi.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-mousewheel/3.1.11/jquery.mousewheel.min.js"></script>
+    <script src="src/agigen.tiled-image-viewer.js"></script>
+    <script>
+        var el = document.getElementById('tiled-image'),
+            image = {width: 158701, height: 26180, tilePath: '//s3-eu-west-1.amazonaws.com/eye-for-detail/sthlm/tiles_512/'},
+            tiledImage = new agigen.tiledImageViewer.TiledImageViewer(el, {
+                width: image.width,
+                height: image.height,
+                maxTileZoom: 8,
+                minTileZoom: 1,
+                // make the image fill window height
+                defaultZoom: Math.log(1 / (window.innerHeight / image.height)) / Math.log(2) + 1,
+                tilePath: image.tilePath,
+            });
+
+        $(window).on('resize', function(){
+            tiledImage.trigger('resize');
+        });
+
+        tiledImage.on('click', function(e) {
+            console.log('CLICK', e.tiledImageEvent);
+        });
+
+        tiledImage.on('doubleclick', function(e) {
+            console.log('DOUBLECLICK', e.tiledImageEvent);
+        });
+    </script>
+</body>
+</html>
