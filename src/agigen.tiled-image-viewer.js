@@ -352,6 +352,8 @@
 
                     lastMouseUp = currentTime;
                 }
+
+                this.el.style.cursor = 'inherit';
             }.bind(this));
 
             // set the callbacks for when the mouse or a touch moves
@@ -380,6 +382,8 @@
                     mouseLog = mouseLog.slice(-10);
 
                     this.setCenter({x: newX, y: newY});
+
+                    this.el.style.cursor = 'move';
                 }
 
                 if (this.pinching && e.originalEvent.touches && e.originalEvent.touches.length === 2) {
