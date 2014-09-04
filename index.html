@@ -22,8 +22,8 @@
     <script src="src/agigen.tiled-image-viewer.js"></script>
     <script>
         var el = document.getElementById('tiled-image'),
-            image = {width: 158701, height: 26180, tilePath: '//s3-eu-west-1.amazonaws.com/eye-for-detail/sthlm/tiles_512/'},
-            tiledImage = new agigen.tiledImageViewer.TiledImageViewer(el, {
+            image = {width: 158701, height: 26180, tilePath: '//s3-eu-west-1.amazonaws.com/eye-for-detail/v2/stockholm/tiles_512/'},
+            tiledImage = new agigen.TiledImageViewer(el, {
                 width: image.width,
                 height: image.height,
                 maxTileZoom: 8,

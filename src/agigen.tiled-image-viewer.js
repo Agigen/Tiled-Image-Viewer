@@ -3,14 +3,14 @@
     "use strict";
     if ( typeof define === 'function' && define.amd ) {
         // AMD. Register as an anonymous module.
-        define('tiledImageViewer', ['pixi', 'underscore', 'jquery'], factory);
+        define('tiled-image-viewer', ['pixi', 'underscore', 'jquery'], factory);
     } else if (typeof exports === 'object') {
         // Node/CommonJS style for Browserify
         module.exports = factory;
     } else {
         // Browser globals
         window.agigen = window.agigen || {};
-        window.agigen.tiledImageViewer = factory(window.PIXI, window._, window.jQuery);
+        window.agigen.TiledImageViewer = factory(window.PIXI, window._, window.jQuery);
     }
 }(function(PIXI, _, $) {
     "use strict";
@@ -50,7 +50,7 @@
     PAN_DIRECTION_LEFT = -1;
 
     zoomDamping = 5;
-    dragDamping = 5;
+    dragDamping = 15;
 
     defaultConfig = {
         width: 158701,
@@ -61,7 +61,8 @@
         minZoom: 1,
         defaultZoom: 6,
         tileSize: 512,
-        tilePath: null
+        tilePath: null,
+        dpr: 1,
     };
 
     TiledImageViewer = (function() {
@@ -89,7 +90,7 @@
             this._setupMap();
             this._bindEvents();
 
-            this.init()
+            this.init();
 
             this._render();
         };
@@ -98,16 +99,15 @@
         TiledImageViewer.prototype._setupPixi = function() {
             var renderDimensions;
             this.stage = new PIXI.Stage(0x222222);
-            this.dpr = 1;
+            this.dpr = this.config.dpr;
 
+            debug.log("Initialize pixi with dpr:", this.dpr);
 
-            renderDimensions = {width: this.el.offsetWidth, height: this.el.offsetHeight};
+            renderDimensions = {width: this.el.offsetWidth * this.dpr, height: this.el.offsetHeight * this.dpr};
 
-            // if (Device.sketen) {
-            //     renderDimensions.width = Math.round(window.innerWidth / 2);
-            //     renderDimensions.height = Math.round(window.innerHeight / 2);
-            //     this.el.classNames += ' lowperf-device';
-            // }
+            if (this.dpr < 1) {
+                this.el.className += ' lowperf-device';
+            }
 
             this.renderer = PIXI.autoDetectRenderer(renderDimensions.width, renderDimensions.height, null, false, false);
 
@@ -138,13 +138,14 @@
             this.panDirection = PAN_DIRECTION_RIGHT;
             this.panSpeed = 0;
 
-            if (!this.config.center) {
+            if (this.config.center) {
+                console.log("CENTER", this.config.center);
+                this.setCenter(this.config.center);
+            } else {
                 this.setCenter({
                     x: this.config.width / 2,
                     y: this.config.height / 2
                 });
-            } else {
-                this.setCenter(this.config.center);
             }
 
 
@@ -203,7 +204,9 @@
                 }
             }
 
-            this.setCenter({x: this.config.width / 2, y: this.config.height / 2});
+            this.on('beforeRender', this._updateZoom.bind(this));
+            this.on('beforeRender', this._updatePosition.bind(this));
+            this.on('beforeRender', this._updateAutoPan.bind(this));
 
             debug.groupEnd();
         };
@@ -281,7 +284,7 @@
 
             // set the events for when the mouse is released or a touch is released
             $(this.renderer.view).on('mouseup touchend', function(e) {
-                var eventCoordinates, mouseMoveDelta, currentTime, timeDelta, coordinates, sx, sy, realX, realY, _tiles, tx, ty
+                var eventCoordinates, mouseMoveDelta, currentTime, timeDelta, coordinates, sx, sy, realX, realY, _tiles, tx, ty;
 
                 e.preventDefault();
 
@@ -329,7 +332,7 @@
                             tx = Math.floor(coordinates.x / Math.pow(2, i - 1) / this.config.tileSize) * this.config.tileSize;
                             ty = Math.floor(coordinates.y / Math.pow(2, i - 1) / this.config.tileSize) * this.config.tileSize;
 
-                            _tiles.push(i + "/tile_"+tx+"_"+ty+".jpg")
+                            _tiles.push(i + "/tile_"+tx+"_"+ty+".jpg");
                         }
 
                         debug.log("Mouse click at:", coordinates);
@@ -339,8 +342,8 @@
                             sx = (mouseLog[0].x - mouseLog[mouseLog.length - 1].x) / (mouseLog[0].time - mouseLog[mouseLog.length - 1].time) * this.dpr;
                             sy = (mouseLog[0].y - mouseLog[mouseLog.length - 1].y) / (mouseLog[0].time - mouseLog[mouseLog.length - 1].time) * this.dpr;
 
-                            realX = sx * Math.pow(2, this.currentZoom-1) * 100;
-                            realY = sy * Math.pow(2, this.currentZoom-1) * 100;
+                            realX = sx * Math.pow(2, this.currentZoom-1) * 200;
+                            realY = sy * Math.pow(2, this.currentZoom-1) * 200;
 
                             this.panTo({x: this.center.x - realX, y: this.center.y - realY});
                         }
@@ -578,6 +581,7 @@
             this.center = this.targetCenter = coordinate;
 
             if (this.mapContainer) {
+                this._updatePosition();
                 this._loadMap();
             }
         };
@@ -639,7 +643,7 @@
                 return true;
             }
 
-        }
+        };
 
         TiledImageViewer.prototype._hideTile = function (x, y, zoomLevel) {
             if (typeof this.tiles[zoomLevel + '_' + x + '_' + y] !== 'undefined') {
@@ -719,8 +723,8 @@
         TiledImageViewer.prototype.coordinateToContainerPixel = function(coordinate) {
             var containerX, containerY;
 
-            containerX = (coordinate.x / Math.pow(2, this.currentZoom-1) + this.mapContainer.position.x) * this.dpr;
-            containerY = (coordinate.y / Math.pow(2, this.currentZoom-1) + this.mapContainer.position.y) * this.dpr;
+            containerX = (coordinate.x / Math.pow(2, this.currentZoom-1) + this.mapContainer.position.x) / this.dpr;
+            containerY = (coordinate.y / Math.pow(2, this.currentZoom-1) + this.mapContainer.position.y) / this.dpr;
 
             return {x: containerX, y: containerY};
         };
@@ -732,7 +736,7 @@
                 return;
             }
 
-            this.panSpeed = (this.config.width - window.innerWidth * Math.pow(2, this.currentZoom)) / duration;
+            this.panSpeed = (this.config.width - window.innerWidth * this.dpr * Math.pow(2, this.currentZoom - 1)) / duration;
         };
 
 
@@ -821,8 +825,8 @@
                 this._loadMapMedium();
             }
 
-            this.mapContainer.position.x = -(this.center.x / Math.pow(2, this.currentZoom - 1)) + this.el.offsetWidth / 2;
-            this.mapContainer.position.y = -(this.center.y / Math.pow(2, this.currentZoom - 1)) + this.el.offsetHeight / 2;
+            this.mapContainer.position.x = -(this.center.x / Math.pow(2, this.currentZoom - 1)) + (this.el.offsetWidth * this.dpr) / 2;
+            this.mapContainer.position.y = -(this.center.y / Math.pow(2, this.currentZoom - 1)) + (this.el.offsetHeight * this.dpr) / 2;
         };
 
 
@@ -840,11 +844,9 @@
             this.lastAnimTimeDelta = time - (this.lastAnimTime || 0);
             this.lastAnimTime = time;
 
-            this._updateZoom(time);
-            this._updatePosition(time);
-            this._updateAutoPan(time);
-
+            this.trigger('beforeRender', time);
             this.renderer.render(this.stage);
+            this.trigger('afterRender', time);
         };
 
         return TiledImageViewer;
@@ -852,8 +854,6 @@
     }());
 
     // exports
-    return {
-        TiledImageViewer: TiledImageViewer
-    };
+    return TiledImageViewer;
 
 }));
