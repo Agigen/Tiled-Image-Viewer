@@ -193,8 +193,9 @@
 
             debug.groupCollapsed("TiledImageViewer load top level tiles");
             // Preload all tiles in top layer
-            maxAvailableXTile = this.config.width / Math.pow(2, this.config.maxTileZoom - 1);
-            maxAvailableYTile = this.config.height / Math.pow(2, this.config.maxTileZoom - 1);
+            var _scaleFactor = Math.pow(2, this.config.maxTileZoom - 1);
+            maxAvailableXTile = Math.floor((this.config.width / _scaleFactor - 1) / this.config.tileSize) * this.config.tileSize;
+            maxAvailableYTile = Math.floor((this.config.height / _scaleFactor - 1) / this.config.tileSize) * this.config.tileSize;
 
                 debug.log(this.config);
 
@@ -477,8 +478,8 @@
             debug.log(startPointX, endPointX);
             debug.log(startPointY, endPointY);
 
-            maxAvailableXTile = Math.floor(map_width / this.config.tileSize) * this.config.tileSize;
-            maxAvailableYTile = Math.floor(map_height / this.config.tileSize) * this.config.tileSize;
+            maxAvailableXTile = Math.floor((map_width - 1) / this.config.tileSize) * this.config.tileSize;
+            maxAvailableYTile = Math.floor((map_height - 1) / this.config.tileSize) * this.config.tileSize;
 
             debug.log("Max available tiles: ", maxAvailableXTile, maxAvailableYTile);
 
