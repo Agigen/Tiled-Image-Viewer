@@ -63,6 +63,7 @@
         tileSize: 512,
         tilePath: null,
         dpr: 1,
+        background: 0x363636,
     };
 
     TiledImageViewer = (function() {
@@ -109,7 +110,7 @@
                 this.el.className += ' lowperf-device';
             }
 
-            this.renderer = PIXI.autoDetectRenderer(renderDimensions.width, renderDimensions.height, null, false, false);
+            this.renderer = PIXI.autoDetectRenderer(renderDimensions.width, renderDimensions.height, null, true, false);
 
             debug.log("Renderer:", this.renderer);
 
@@ -161,7 +162,7 @@
             this.mapContainerBackground = new PIXI.DisplayObjectContainer();
 
             box = new PIXI.Graphics()
-                .beginFill(0x363636)
+                .beginFill(this.config.background)
                 .drawRect(0, 0, this.config.width, this.config.height)
                 .endFill();
 
