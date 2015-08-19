@@ -192,7 +192,9 @@
             this.stage.addChild(this.mapContainer);
 
 
-            debug.groupCollapsed("TiledImageViewer load top level tiles");
+            if (debug.groupCollapsed) {
+                debug.groupCollapsed("TiledImageViewer load top level tiles");
+            }
             // Preload all tiles in top layer
             var _scaleFactor = Math.pow(2, this.config.maxTileZoom - 1);
             maxAvailableXTile = Math.floor((this.config.width / _scaleFactor - 1) / this.config.tileSize) * this.config.tileSize;
@@ -210,7 +212,9 @@
             this.on('beforeRender', this._updatePosition.bind(this));
             this.on('beforeRender', this._updateAutoPan.bind(this));
 
-            debug.groupEnd();
+            if (debug.groupEnd) {
+                debug.groupEnd();
+            }
         };
 
         TiledImageViewer.prototype._bindEvents = function() {
@@ -449,7 +453,9 @@
             }
 
 
-            debug.groupCollapsed("TiledImageViewer.loadMap");
+            if (debug.groupCollapsed) {
+                debug.groupCollapsed("TiledImageViewer.loadMap");
+            }
             debug.log("Find out which tiles are needed");
             debug.log("Dimensions of the map:", this.config.width, this.config.height);
             // debug.log("Size of the tiles: ", this.config.tileSize);
@@ -532,7 +538,9 @@
                 this._hideZoomLayers();
             }
 
-            debug.groupEnd();
+            if (debug.groupEnd) {
+                debug.groupEnd();
+            }
         };
 
 
