@@ -208,6 +208,13 @@
                 }
             }
 
+            var allTilesLoadedHandler = function allTilesLoaded() {
+                this._loadMap();
+                this.off('allTilesLoaded', allTilesLoadedHandler);
+            };
+
+            this.on('allTilesLoaded', allTilesLoadedHandler);
+
             this.on('beforeRender', this._updateZoom.bind(this));
             this.on('beforeRender', this._updatePosition.bind(this));
             this.on('beforeRender', this._updateAutoPan.bind(this));
@@ -562,8 +569,23 @@
             }
 
             this.itemMapEventCallbacks[event].push(callback);
+
+            return callback;
         };
 
+        TiledImageViewer.prototype.off = function(event, searchedHandler) {
+            event = event.toLowerCase();
+
+            if (this.itemMapEventCallbacks && this.itemMapEventCallbacks[event]) {
+                for (var i = 0; i < this.itemMapEventCallbacks[event].length; i++) {
+                    var handler = this.itemMapEventCallbacks[event][i];
+
+                    if (handler.toString() === searchedHandler.toString()) {
+                        this.itemMapEventCallbacks[event].splice(i, 1);
+                    }
+                }
+            }
+        };
 
         TiledImageViewer.prototype.trigger = function(event) {
             var args = Array.prototype.slice.call(arguments, 1);
@@ -576,7 +598,9 @@
 
             if (this.itemMapEventCallbacks[event]) {
                 _.each(this.itemMapEventCallbacks[event], function(callback) {
-                    callback.apply(this, args);
+                    if (callback) {
+                        callback.apply(this, args);
+                    }
                 }.bind(this));
             }
         };
@@ -644,6 +668,7 @@
 
                     if (--that.tileLoadingCounter === 0) {
                         debug.log("All tiles loaded, hiding other zoom levels");
+                        that.trigger('allTilesLoaded');
                         that._hideZoomLayers();
                     }
                 };
